@@ -80,25 +80,25 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       {/* Video Container Frame */}
       <div className="relative group rounded-2xl overflow-hidden border border-border/60 bg-gradient-to-b from-neutral-950 to-neutral-900 shadow-2xl p-2 sm:p-3">
         {/* Top Header bar with status indicators */}
-        <div className="flex items-center justify-between pb-2 px-1 text-xs text-muted-foreground border-b border-white/5 mb-3">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-semibold text-foreground text-sm">
+        <div className="flex flex-wrap items-center justify-between pb-2 px-1 text-xs text-muted-foreground border-b border-white/5 mb-3 gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="font-semibold text-foreground text-sm truncate">
               {currentVideo.title}
             </span>
             {currentVideo.subtitle && (
-              <span className="hidden sm:inline-block text-xs text-muted-foreground">
+              <span className="hidden sm:inline-block text-xs text-muted-foreground truncate">
                 • {currentVideo.subtitle}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {currentVideo.duration && (
-              <span className="font-mono text-[11px] bg-white/10 px-2 py-0.5 rounded text-white/90">
+              <span className="font-mono text-[10px] sm:text-[11px] bg-white/10 px-2 py-0.5 rounded text-white/90">
                 {currentVideo.duration}
               </span>
             )}
-            <span className="text-[10px] font-mono uppercase bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded-full font-semibold">
+            <span className="text-[9px] sm:text-[10px] font-mono uppercase bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded-full font-semibold">
               {isPortrait ? "9:16 Vertical Reel" : "16:9 Widescreen"}
             </span>
           </div>

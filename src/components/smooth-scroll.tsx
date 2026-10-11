@@ -29,7 +29,8 @@ function SmoothScroll({ children, isInsideModal = false }: LenisProps) {
     // frame can't skip a large scroll delta.
     const raf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);
-    gsap.ticker.lagSmoothing(0);
+    // Smooth out dropped frames (max lag 500ms, cap delta to 33ms) instead of sudden jump (0)
+    gsap.ticker.lagSmoothing(500, 33);
     return () => gsap.ticker.remove(raf);
   }, [lenis]);
 
@@ -38,13 +39,13 @@ function SmoothScroll({ children, isInsideModal = false }: LenisProps) {
       root
       autoRaf={false}
       options={{
-        duration: reducedMotion ? 0 : 1.1,
+        duration: reducedMotion ? 0 : 1.0,
         smoothWheel: !reducedMotion,
+        syncTouch: false, // native momentum scrolling on touch devices
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         prevent: (node) => {
           if (isInsideModal) return true;
-          const modalOpen = node.classList.contains("modall");
-          return modalOpen;
+          return node.classList.contains("modall") || node.closest?.("[data-lenis-prevent]") !== null;
         },
       }}
     >

@@ -8,9 +8,11 @@ import {
 import { FloatingDock } from "../ui/floating-dock";
 import { ScrollArea } from "../ui/scroll-area";
 import Link from "next/link";
-import { ArrowUpRight, Play } from "lucide-react";
+import { Play } from "lucide-react";
 import { SiLinkedin, SiInstagram } from "react-icons/si";
 import { motion } from "motion/react";
+import { usePerfProfile } from "@/hooks/use-perf-profile";
+import { cn } from "@/lib/utils";
 
 import projects, { Project } from "@/data/projects";
 import { config } from "@/data/config";
@@ -21,11 +23,11 @@ import ScrollingPreview from "../scrolling-preview";
 
 const ProjectsSection = () => {
   return (
-    <SectionWrapper id="projects" className="max-w-7xl mx-auto md:min-h-[130vh] px-4">
+    <SectionWrapper id="projects" className="max-w-7xl mx-auto md:min-h-[130vh] px-4 pointer-events-auto">
       <SectionHeader id="projects" title="Projects" />
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6 px-1">
         <p className="text-sm text-muted-foreground font-mono">
-          Featured video editing portfolio • All {projects.length} commercial cuts &amp; reels
+          Featured video editing portfolio • All {projects.length}{" "}commercial cuts &amp; reels
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Link
@@ -60,47 +62,59 @@ const ProjectsSection = () => {
 const ProjectVideoThumbnail = ({
   src,
   poster,
+  isHovered = false,
 }: {
   src: string;
   poster?: string;
+  isHovered?: boolean;
 }) => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const { isMobile, lowEnd } = usePerfProfile();
 
+  // Desktop hover playback; skip video decoding on mobile grid to prevent 400MB memory bottlenecks
   React.useEffect(() => {
+    if (isMobile || lowEnd) return;
     const video = videoRef.current;
     if (!video) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        });
-      },
-      { threshold: 0.15 }
-    );
-
-    observer.observe(video);
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
+    if (isHovered) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+      video.currentTime = 0;
+    }
+  }, [isHovered, isMobile, lowEnd]);
 
   return (
     <div className="absolute inset-0 w-full h-full bg-neutral-950 overflow-hidden pointer-events-none">
-      <video
-        ref={videoRef}
-        src={encodeURI(src)}
-        poster={poster}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-      />
+      {/* Crisp, fast poster image that loads instantly without lagging mobile */}
+      {poster && (
+        <img
+          src={poster}
+          alt="Project preview"
+          loading="lazy"
+          className={cn(
+            "w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105",
+            isHovered && !isMobile && !lowEnd ? "opacity-0" : "opacity-100"
+          )}
+        />
+      )}
+
+      {/* Hover preview video for desktop */}
+      {!isMobile && !lowEnd && (
+        <video
+          ref={videoRef}
+          src={encodeURI(src)}
+          muted
+          loop
+          playsInline
+          preload="none"
+          className={cn(
+            "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+            isHovered ? "opacity-100 scale-105" : "opacity-0"
+          )}
+        />
+      )}
     </div>
   );
 };
@@ -109,11 +123,12 @@ const ProjectCard = ({ project }: { project: Project }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center pointer-events-auto w-full">
       <ResponsiveDialog>
-        <ResponsiveDialogTrigger className="bg-transparent flex justify-center w-full">
-          <div
-            className="group relative w-full max-w-[400px] h-auto rounded-lg overflow-hidden ring-1 ring-white/10 shadow-lg"
+        <ResponsiveDialogTrigger asChild>
+          <button
+            type="button"
+            className="group relative w-full max-w-[400px] h-auto rounded-lg overflow-hidden ring-1 ring-white/10 shadow-lg cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary transition-transform duration-300 active:scale-[0.98]"
             style={{ aspectRatio: "3/2" }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -124,6 +139,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
               <ProjectVideoThumbnail
                 src={project.videoSrc}
                 poster={project.src}
+                isHovered={isHovered}
               />
             ) : (
               <ScrollingPreview
@@ -141,7 +157,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
                     <Play className="w-2.5 h-2.5 fill-current" /> Video
                   </span>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/25 backdrop-blur-[1px]">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/30 backdrop-blur-[1px]">
                   <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/95 text-primary-foreground shadow-2xl backdrop-blur-md border border-white/30 scale-90 group-hover:scale-100 transition-transform duration-300">
                     <Play className="w-4 h-4 fill-current ml-0.5 text-white" />
                     <span className="text-xs font-semibold text-white tracking-wide">Watch Project</span>
@@ -151,26 +167,26 @@ const ProjectCard = ({ project }: { project: Project }) => {
             )}
             <div className="absolute w-full h-24 bottom-0 left-0 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none z-10">
               <div className="flex flex-col h-full items-start justify-end p-4">
-                <div className="text-lg font-semibold text-left text-foreground dark:[text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                <div className="text-base sm:text-lg font-semibold text-left text-foreground dark:[text-shadow:0_1px_4px_rgba(0,0,0,0.8)] line-clamp-1">
                   {project.title}
                 </div>
-                <div className="text-xs bg-primary text-primary-foreground rounded-lg w-fit px-2">
+                <div className="text-xs bg-primary text-primary-foreground rounded-lg w-fit px-2 mt-1">
                   {project.category}
                 </div>
               </div>
             </div>
-          </div>
+          </button>
         </ResponsiveDialogTrigger>
 
         <ResponsiveDialogContent className="md:max-w-4xl md:h-[85vh] md:!flex md:flex-col md:overflow-hidden md:p-0 md:gap-0">
-          {/* Sticky header */}
-          <div className="shrink-0 border-b border-border bg-background/80 backdrop-blur-sm px-8 py-5">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 min-w-0">
-                <h4 className="font-display text-xl md:text-2xl font-bold text-foreground tracking-tight truncate">
+          {/* Sticky responsive header */}
+          <div className="shrink-0 border-b border-border bg-background/80 backdrop-blur-sm px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                <h4 className="font-display text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight truncate">
                   {project.title}
                 </h4>
-                <span className="shrink-0 text-[11px] uppercase tracking-widest text-muted-foreground border border-border rounded-full px-3 py-0.5">
+                <span className="shrink-0 text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground border border-border rounded-full px-2.5 py-0.5 hidden xs:inline-block">
                   {project.category}
                 </span>
               </div>
@@ -197,15 +213,15 @@ const ProjectCard = ({ project }: { project: Project }) => {
             </div>
           </div>
 
-          {/* Scrollable content */}
-          <ScrollArea className="flex-1" type="always" data-lenis-prevent>
-            <div className="px-8 py-8">
+          {/* Scrollable content with responsive spacing */}
+          <ScrollArea className="flex-1 overflow-y-auto" type="always" data-lenis-prevent>
+            <div className="px-4 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
               {/* Tech stack */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
-                className="flex flex-col md:flex-row gap-6 md:gap-10 mb-10"
+                className="flex flex-col md:flex-row gap-6 md:gap-10 mb-8"
               >
                 {project.skills.frontend?.length > 0 && (
                   <div className="flex flex-col items-center md:items-start gap-2">
@@ -226,7 +242,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
               </motion.div>
 
               {/* Divider */}
-              <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-10" />
+              <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-8" />
 
               {/* Project content */}
               <motion.div
@@ -238,7 +254,6 @@ const ProjectCard = ({ project }: { project: Project }) => {
               </motion.div>
             </div>
           </ScrollArea>
-
         </ResponsiveDialogContent>
       </ResponsiveDialog>
     </div>

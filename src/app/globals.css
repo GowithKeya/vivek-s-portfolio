@@ -159,7 +159,13 @@ body > canvas {
   .canvas-overlay-mode h5,
   .canvas-overlay-mode h6,
   .canvas-overlay-mode span,
-  .canvas-overlay-mode svg {
+  .canvas-overlay-mode svg,
+  .canvas-overlay-mode .pointer-events-auto,
+  .canvas-overlay-mode [data-state],
+  .canvas-overlay-mode [data-radix-collection-item],
+  #experience,
+  #projects,
+  #contact {
     pointer-events: auto;
   }
 }

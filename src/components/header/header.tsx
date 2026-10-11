@@ -50,8 +50,9 @@ const Header = ({ loader, githubStars }: HeaderProps) => {
         y: 0,
       }}
       transition={{
-        delay: loader ? 1.0 : 0,
-        duration: 0.6,
+        delay: 0,
+        duration: 0.35,
+        ease: "easeOut",
       }}
     >
       {/* <div

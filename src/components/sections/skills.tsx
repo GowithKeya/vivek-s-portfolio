@@ -15,9 +15,9 @@ import { useSceneStatus } from "@/lib/scene-health";
  * Reduced motion, unavailable WebGL and scene failures keep the grid visible.
  */
 const SkillsSection = () => {
-  const { disable3D, ready } = usePerfProfile();
+  const { disable3D, ready, isMobile } = usePerfProfile();
   const sceneStatus = useSceneStatus();
-  const showGrid = !ready || disable3D || sceneStatus !== "ready";
+  const showGrid = isMobile || !ready || disable3D || sceneStatus !== "ready";
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => ScrollTrigger.refresh());

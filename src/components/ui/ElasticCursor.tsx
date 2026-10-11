@@ -102,6 +102,7 @@ function ElasticCursor() {
 
   const { loadingPercent, isLoading } = usePreloader();
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const isTouch = useMediaQuery("(pointer: coarse)");
 
   const jellyRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);

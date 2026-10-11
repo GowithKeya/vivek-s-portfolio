@@ -41,23 +41,25 @@ function SceneSession({ maxDpr }: { maxDpr: number }) {
     }
     if (!context) {
       setSceneStatus("failed");
-      return () => setSceneStatus("idle");
+      return;
     }
     context.getExtension("WEBGL_lose_context")?.loseContext();
     setSceneStatus("loading");
-    return () => setSceneStatus("idle");
   }, []);
 
   useEffect(() => {
     if (status === "failed") bypassLoading();
   }, [status, bypassLoading]);
 
-  // A ready scene must not be failed by its loading deadline.
+  // A ready scene must not be failed by its loading deadline. Shortened from 20s to 3s for fast loads.
   useEffect(() => {
     if (status !== "loading") return;
-    const timeout = window.setTimeout(() => setSceneStatus("failed"), 20_000);
+    const timeout = window.setTimeout(() => {
+      setSceneStatus("failed");
+      bypassLoading();
+    }, 3_000);
     return () => window.clearTimeout(timeout);
-  }, [status]);
+  }, [status, bypassLoading]);
 
   if (status === "idle" || status === "failed") return null;
   return (
