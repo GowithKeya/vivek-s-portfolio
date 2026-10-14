@@ -18,6 +18,9 @@ import { config } from "@/data/config";
 import SectionWrapper from "../ui/section-wrapper";
 
 const HeroSection = () => {
+  const [firstName, ...lastNameParts] = config.author.split(" ");
+  const lastName = lastNameParts.join(" ");
+
   return (
     <SectionWrapper id="hero" className={cn("relative w-full min-h-[100dvh] flex flex-col justify-center")}>
       <div className="grid md:grid-cols-2 w-full">
@@ -26,10 +29,10 @@ const HeroSection = () => {
             "min-h-[calc(100dvh-4rem)] z-[2]",
             "col-span-1",
             "flex flex-col justify-center items-start",
-            "pt-20 pb-16 px-4 sm:px-8 md:p-16 lg:p-20 xl:p-24"
+            "pt-20 pb-16 px-4 sm:px-8 md:py-16 md:pl-12 md:pr-6 lg:py-20 lg:pl-16 lg:pr-8 xl:py-24 xl:pl-20 xl:pr-10"
           )}
         >
-          <div className="flex flex-col w-full max-w-xl">
+          <div className="flex flex-col w-full max-w-xl 2xl:max-w-2xl">
             <div>
               <BlurIn delay={0.2}>
                 <p
@@ -45,16 +48,14 @@ const HeroSection = () => {
               <BlurIn delay={0.4}>
                 <h1
                   className={cn(
-                    "-ml-[2px] sm:-ml-[4px] md:-ml-[6px] leading-[1.05] sm:leading-none text-left",
+                    "-ml-[2px] sm:-ml-[4px] md:-ml-[6px] leading-[0.98] sm:leading-[0.92] text-left",
                     "text-foreground",
-                    "font-bold text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl",
-                    "cursor-default font-display break-words"
+                    "font-bold text-5xl sm:text-6xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-[7.5rem]",
+                    "cursor-default font-display select-none tracking-tight"
                   )}
                 >
-                  {config.author.split(" ")[0]}
-                  <span className="md:hidden"> </span>
-                  <br className="hidden md:block" />
-                  {config.author.split(" ")[1]}
+                  <span className="block whitespace-nowrap">{firstName}</span>
+                  <span className="block whitespace-nowrap">{lastName}</span>
                 </h1>
               </BlurIn>
 
