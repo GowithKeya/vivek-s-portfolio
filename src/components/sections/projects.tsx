@@ -69,50 +69,86 @@ const ProjectVideoThumbnail = ({
   isHovered?: boolean;
 }) => {
   const videoRef = React.useRef<HTMLVideoElement>(null);
-  const { isMobile, lowEnd } = usePerfProfile();
+  const [isVideoLoaded, setIsVideoLoaded] = React.useState(false);
 
-  // Desktop hover playback; skip video decoding on mobile grid to prevent 400MB memory bottlenecks
+  // Initialize video settings (muted, paused on initial frame)
   React.useEffect(() => {
-    if (isMobile || lowEnd) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.muted = true;
+
+    const handleLoaded = () => {
+      setIsVideoLoaded(true);
+      if (!isHovered) {
+        try {
+          video.currentTime = 0.001;
+          video.pause();
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    video.addEventListener("loadedmetadata", handleLoaded);
+    video.addEventListener("loadeddata", handleLoaded);
+
+    if (video.readyState >= 2) {
+      setIsVideoLoaded(true);
+    }
+
+    return () => {
+      video.removeEventListener("loadedmetadata", handleLoaded);
+      video.removeEventListener("loadeddata", handleLoaded);
+    };
+  }, []);
+
+  // Hover playback: play when hovered, pause & reset to first frame when unhovered
+  React.useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     if (isHovered) {
-      video.play().catch(() => {});
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Handled silently if interrupted by quick mouse exit
+        });
+      }
     } else {
       video.pause();
-      video.currentTime = 0;
+      try {
+        video.currentTime = 0.001;
+      } catch {
+        // ignore
+      }
     }
-  }, [isHovered, isMobile, lowEnd]);
+  }, [isHovered]);
 
   return (
     <div className="absolute inset-0 w-full h-full bg-neutral-950 overflow-hidden pointer-events-none">
-      {/* Crisp, fast poster image that loads instantly without lagging mobile */}
-      {poster && (
+      {/* Paused video serves as the primary thumbnail and plays on hover */}
+      <video
+        ref={videoRef}
+        src={`${encodeURI(src)}#t=0.001`}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        className={cn(
+          "w-full h-full object-cover transition-transform duration-700 ease-out",
+          isHovered ? "scale-105" : "scale-100",
+          isVideoLoaded ? "opacity-100" : "opacity-0"
+        )}
+      />
+
+      {/* Fallback poster while video frame is initialising */}
+      {!isVideoLoaded && poster && (
         <img
           src={poster}
           alt="Project preview"
           loading="lazy"
-          className={cn(
-            "w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105",
-            isHovered && !isMobile && !lowEnd ? "opacity-0" : "opacity-100"
-          )}
-        />
-      )}
-
-      {/* Hover preview video for desktop */}
-      {!isMobile && !lowEnd && (
-        <video
-          ref={videoRef}
-          src={encodeURI(src)}
-          muted
-          loop
-          playsInline
-          preload="none"
-          className={cn(
-            "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-            isHovered ? "opacity-100 scale-105" : "opacity-0"
-          )}
+          className="absolute inset-0 w-full h-full object-cover"
         />
       )}
     </div>
@@ -152,15 +188,39 @@ const ProjectCard = ({ project }: { project: Project }) => {
 
             {project.hasVideo && (
               <>
+                {/* Status badge in top right */}
                 <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
-                  <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase font-mono bg-red-600/90 text-white shadow-md backdrop-blur-sm border border-white/20">
-                    <Play className="w-2.5 h-2.5 fill-current" /> Video
+                  <span
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase font-mono shadow-md backdrop-blur-md border transition-all duration-300",
+                      isHovered
+                        ? "bg-emerald-600/90 text-white border-emerald-400/40 shadow-emerald-950/40"
+                        : "bg-red-600/90 text-white border-white/20"
+                    )}
+                  >
+                    {isHovered ? (
+                      <>
+                        <span className="size-1.5 rounded-full bg-white animate-pulse" />
+                        Previewing
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-2.5 h-2.5 fill-current" />
+                        Video
+                      </>
+                    )}
                   </span>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/30 backdrop-blur-[1px]">
-                  <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/95 text-primary-foreground shadow-2xl backdrop-blur-md border border-white/30 scale-90 group-hover:scale-100 transition-transform duration-300">
-                    <Play className="w-4 h-4 fill-current ml-0.5 text-white" />
-                    <span className="text-xs font-semibold text-white tracking-wide">Watch Project</span>
+
+                {/* Center play icon: visible when paused, fades out when playing on hover so video is completely unobstructed */}
+                <div
+                  className={cn(
+                    "absolute inset-0 flex items-center justify-center pointer-events-none z-20 transition-all duration-300",
+                    isHovered ? "opacity-0 scale-95" : "opacity-100 scale-100"
+                  )}
+                >
+                  <div className="flex size-12 items-center justify-center rounded-full bg-black/50 text-white shadow-2xl backdrop-blur-sm border border-white/25 transition-transform duration-300 group-hover:scale-110">
+                    <Play className="w-5 h-5 fill-current ml-0.5 text-white" />
                   </div>
                 </div>
               </>

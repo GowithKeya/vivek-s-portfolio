@@ -58,18 +58,20 @@ const SkillsSection = () => {
             <span
               aria-hidden
               style={{ background: "var(--skill)" }}
-              className="pointer-events-none absolute -top-6 h-16 w-16 rounded-full opacity-25 blur-2xl transition-opacity duration-300 group-hover:opacity-70"
+              className="pointer-events-none absolute -top-4 h-20 w-20 rounded-full opacity-25 blur-2xl transition-opacity duration-300 group-hover:opacity-60"
             />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={skill.icon}
-              alt={skill.label}
-              width={44}
-              height={44}
-              loading="lazy"
-              className="relative size-9 object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-110 md:size-11"
-            />
-            <span className="relative text-center text-xs font-medium text-foreground/80 transition-colors group-hover:text-foreground md:text-sm">
+            <div className="relative flex size-12 items-center justify-center rounded-xl bg-background/40 p-2 ring-1 ring-white/10 shadow-sm backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-background/60 group-hover:ring-[var(--skill)]/40 md:size-14">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={skill.icon}
+                alt={skill.label}
+                width={44}
+                height={44}
+                loading="lazy"
+                className="size-8 object-contain transition-transform duration-300 md:size-9"
+              />
+            </div>
+            <span className="relative text-center text-xs font-medium text-foreground/90 transition-colors group-hover:text-foreground md:text-sm">
               {skill.label}
             </span>
           </li>

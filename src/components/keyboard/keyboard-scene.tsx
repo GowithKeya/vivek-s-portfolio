@@ -181,7 +181,7 @@ export default function KeyboardScene({ maxDpr }: { maxDpr: number }) {
           <div className="flex items-center gap-3.5 rounded-2xl border border-border/80 bg-background/95 px-5 py-2.5 shadow-2xl backdrop-blur-md transition-all duration-300">
             {selected?.icon ? (
               <img
-                src={selected.icon}
+                src={Object.values(SKILLS).find((s) => s.name === selected.name)?.icon ?? selected.icon}
                 alt={selected.label}
                 className="size-7 object-contain drop-shadow-sm"
               />
